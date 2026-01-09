@@ -109,7 +109,8 @@
                 </div>
                 <div class="progress-bar"></div>
                 <div class="expiry">Expires in <span id="countdown">1</span> days.</div>
-                <div class="validator">View Onboard Validator Instructions</div>
+                <div class="validator" onclick="showSetup()" style="cursor: pointer;">View Onboard Validator
+                    Instructions</div>
             </div>
         </div>
     </div>
@@ -121,6 +122,14 @@
     </div>
 
     <script>
+        // -------------------------
+        // Color Theme Logic
+        // -------------------------
+        const savedTheme = localStorage.getItem('ticket-theme');
+        if (savedTheme) {
+            document.documentElement.style.setProperty('--first', savedTheme);
+        }
+
         // -------------------------
         // QR generation & popup
         // -------------------------
@@ -145,27 +154,31 @@
 
             // small QR in card
             const smallEl = document.getElementById("qrcode");
-            smallEl.innerHTML = ""; // clear previous
-            new QRCode(smallEl, {
-                text: qrText,
-                width: 220,
-                height: 220,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.L,
-            });
+            if (smallEl) {
+                smallEl.innerHTML = ""; // clear previous
+                new QRCode(smallEl, {
+                    text: qrText,
+                    width: 220,
+                    height: 220,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.L,
+                });
+            }
 
             // large QR for popup
             const popupEl = document.getElementById("popupQRCode");
-            popupEl.innerHTML = "";
-            new QRCode(popupEl, {
-                text: qrText,
-                width: 480,
-                height: 480,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.L,
-            });
+            if (popupEl) {
+                popupEl.innerHTML = "";
+                new QRCode(popupEl, {
+                    text: qrText,
+                    width: 480,
+                    height: 480,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.L,
+                });
+            }
         }
 
         function openPopup() {
@@ -246,11 +259,33 @@
         // Initialization
         // -------------------------
         function initAll() {
+            // Check if we need to show setup
+            if (!localStorage.getItem('ticket-theme')) {
+                document.getElementById('setup-container').style.display = 'flex';
+            }
+
             updateMonthAndYear();
             updateCountdown();
             generateQRCode();
             // Keep countdown updated every second (so the days value moves down at midnight)
             setInterval(updateCountdown, 1000);
+        }
+
+        function saveThemeAndStart() {
+            const select = document.getElementById('theme-select');
+            const color = select.value;
+            localStorage.setItem('ticket-theme', color);
+            document.documentElement.style.setProperty('--first', color);
+            document.getElementById('setup-container').style.display = 'none';
+        }
+
+        function showSetup() {
+            document.getElementById('setup-container').style.display = 'flex';
+            // Optional: Pre-select current theme
+            const currentTheme = localStorage.getItem('ticket-theme');
+            if (currentTheme) {
+                document.getElementById('theme-select').value = currentTheme;
+            }
         }
 
         // Run when DOM ready
@@ -260,6 +295,34 @@
             initAll();
         }
     </script>
+
+    <!-- Setup Overlay -->
+    <div id="setup-container"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:10000; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box;">
+        <h2 style="font-family:'Inter',sans-serif; margin-bottom:20px; color:#333;">Configure Pass</h2>
+
+        <label for="theme-select" style="font-family:'Inter',sans-serif; margin-bottom:10px; font-weight:600;">Select QR
+            Color:</label>
+        <select id="theme-select"
+            style="font-size:16px; padding:10px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; width:100%; max-width:300px;">
+            <option value="#63ad61">Green-1 (#63ad61)</option>
+            <option value="#61ae63">Green-2 (#61ae63)</option>
+            <option value="#bb89bd">Purple-1 (#bb89bd)</option>
+            <option value="#c488c4">Purple-2 (#c488c4)</option>
+            <option value="#f65d5d">Red (#f65d5d)</option>
+            <option value="#979797">Gray-1 (#979797)</option>
+            <option value="#a1a1a1">Gray-2 (#a1a1a1)</option>
+            <option value="#f6d836">Yellow (#f6d836)</option>
+            <option value="#3683f6" selected>Blue-1 (#3683f6)</option>
+            <option value="#3683f6">Blue-2 (#3683f6)</option>
+            <option value="#f7c7cf">Pink-1 (#f7c7cf)</option>
+            <option value="#f6c7cf">Pink-2 (#f6c7cf)</option>
+        </select>
+
+        <button onclick="saveThemeAndStart()"
+            style="font-size:18px; padding:12px 30px; background:#007aff; color:white; border:none; border-radius:10px; font-weight:600; cursor:pointer;">Generate
+            Pass</button>
+    </div>
 
     <!-- Optional: existing session/validation script left intact -->
     <script>
